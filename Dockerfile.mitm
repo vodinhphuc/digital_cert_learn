@@ -1,0 +1,11 @@
+# Dockerfile.mitm (fixed)
+FROM python:3.11-slim
+
+# mitm_proxy.py uses only Python stdlib, so no pip installs required
+COPY mitm_proxy.py /app/mitm_proxy.py
+WORKDIR /app
+
+EXPOSE 9443
+
+# Default command; we pass real args from docker-compose, but this fallback is safe
+CMD ["python","/app/mitm_proxy.py","/certs/attacker/attacker.pem","/certs/attacker/attacker-key.pem","tls_server","8443"]

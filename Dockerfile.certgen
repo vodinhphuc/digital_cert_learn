@@ -1,0 +1,7 @@
+FROM ubuntu:22.04
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+COPY generate-certs.sh /certs/generate-certs.sh
+RUN chmod +x /certs/generate-certs.sh
+VOLUME ["/certs"]
+WORKDIR /certs
+CMD ["/certs/generate-certs.sh"]

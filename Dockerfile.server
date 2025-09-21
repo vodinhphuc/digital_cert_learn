@@ -1,0 +1,7 @@
+FROM python:3.11-slim
+RUN pip install --no-cache-dir flask
+COPY plain_server.py /app/plain_server.py
+COPY tls_server.py /app/tls_server.py
+WORKDIR /app
+EXPOSE 8000 8443
+CMD ["python","/app/plain_server.py"]

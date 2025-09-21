@@ -1,0 +1,61 @@
+version: "3.8"
+services:
+  certgen:
+    build:
+      context: .
+      dockerfile: Dockerfile.certgen
+    volumes:
+      - certs:/certs
+    # run once to generate certs; stays up (so we use restart: "no")
+    entrypoint: [ "/certs/generate-certs.sh" ]
+
+  plain_server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    depends_on: [ "certgen" ]
+    volumes:
+      - certs:/certs:ro
+    environment:
+      - FLASK_ENV=production
+    ports:
+      - "8000:8000"
+    command: [ "python", "/app/plain_server.py" ]
+
+  tls_server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    depends_on: [ "certgen" ]
+    volumes:
+      - certs:/certs:ro
+    environment:
+      - FLASK_ENV=production
+    ports:
+      - "8443:8443"
+    # by default TLS server will use CA-signed cert (server/server.pem)
+    command: [ "python", "/app/tls_server.py", "/certs/server/server.pem", "/certs/server/server-key.pem" ]
+
+  mitm_proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile.mitm
+    depends_on: [ "certgen", "tls_server" ]
+    volumes:
+      - certs:/certs:ro
+    ports:
+      - "9443:9443"
+    command: [ "python", "/app/mitm_proxy.py", "/certs/attacker/attacker.pem", "/certs/attacker/attacker-key.pem", "tls_server", "8443" ]
+
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    depends_on: [ "certgen", "plain_server", "tls_server", "mitm_proxy" ]
+    volumes:
+      - certs:/certs:ro
+    tty: true
+    stdin_open: true
+
+volumes:
+  certs:

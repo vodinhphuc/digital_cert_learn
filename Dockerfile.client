@@ -1,0 +1,5 @@
+FROM python:3.11-slim
+RUN pip install --no-cache-dir requests urllib3
+COPY clients.py /app/clients.py
+WORKDIR /app
+CMD ["/bin/bash"]
